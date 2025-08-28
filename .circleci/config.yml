@@ -29,6 +29,22 @@ jobs:
       - run: |
           echo "Running tests..."
           npm run test
+  publish:
+    executor: docker/docker
+    steps:
+      - setup_remote_docker
+      - checkout
+      # docker/check does 3 things
+      # 1. Verifies Docker is working
+      # 2. Authenticates with Docker Hub using your credentials
+      # 3. Sets up Docker client for operations
+      # Ensure that DOCKER_LOGIN and DOCKER_PASSWORD in CircleCI Project Settings
+      # Without this, we have manually run `docker login`
+      - docker/check
+      - docker/build:
+          image: anita180680/test-repository
+      - docker/push:
+          image: anita180680/test-repository
 # Define the workflow for job execution order
 workflows:
   simple_workflow:
@@ -37,3 +53,6 @@ workflows:
       - test: # Run test job after build
           requires:
             - build # test depends on build
+      - publish:
+          requires:
+            - test
