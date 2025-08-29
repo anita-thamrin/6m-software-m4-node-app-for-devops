@@ -86,22 +86,25 @@ jobs:
   
 # Define the workflow for job execution order
 workflows:
-  ci-workflow:
-    when:
-      condition:
-        equal: [ "<< pipeline.git.branch >>", "main" ]
+  simple_workflow:
+    # when:
+    #   condition:
+    #     equal: [ "<< pipeline.git.branch >>", "main" ]
     jobs:
       - build # Run build job first
       - test: # Run test job after build
           requires:
             - build # test depends on build
-  cd-workflow:
-    when:
-      condition:
-        equal: [ "<< pipeline.git.branch >>", "release" ]
-    jobs:
-      - build
-      - test
+          filters:
+            branches:
+              only: main  
+  # cd-workflow:
+  #   when:
+  #     condition:
+  #       equal: [ "<< pipeline.git.branch >>", "release" ]
+  #   jobs:
+  #     - build
+  #     - test
       - publish:
           requires:
             - build
@@ -109,4 +112,7 @@ workflows:
       - deploy:
           requires:
             - publish
+          filters:
+            branches:
+              only: release
       
