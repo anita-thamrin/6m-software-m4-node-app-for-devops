@@ -3,7 +3,7 @@ version: 2.1
 orbs:
   node: circleci/node@5.0.1
   docker: circleci/docker@2.1.4
-  
+  heroku: circleci/heroku@2.0.0
 # commands - resuable sets of steps
 commands:
   install_deps:
@@ -60,16 +60,53 @@ jobs:
       - docker/push:
           image: anita180680/education-space
           tag: << pipeline.git.revision >>,latest
+  deploy:
+    docker:
+      - image: cimg/node:16.10
+    steps:
+      - setup_remote_docker
+      - heroku/install
+      - checkout
+      - docker/check
+      - run:
+          name: Deploy to Heroku
+          command: |
+            echo "Deploying pre-built image to Heroku..."
+            heroku container:login
+            # Use Heroku container stack
+            heroku stack:set container --app anitathamrin-su-devops
+            # Pull image that was built in publish job
+            docker pull anita180680/education-space:<< pipeline.git.revision >>
+            # Tag it for Heroku
+            docker tag anita180680/education-space:<< pipeline.git.revision >> registry.heroku.com/anitathamrin-su-devops/web
+            # Push to Heroku Container Registry
+            docker push registry.heroku.com/anitathamrin-su-devops/web
+            # Release the pushed Docker image
+            heroku container:release web --app anitathamrin-su-devops
   
 # Define the workflow for job execution order
 workflows:
-  simple_workflow:
+  ci-workflow:
+    when:
+      condition:
+        equal: [ "<< pipeline.git.branch >>", "main" ]
     jobs:
       - build # Run build job first
       - test: # Run test job after build
           requires:
             - build # test depends on build
+  cd-workflow:
+    when:
+      condition:
+        equal: [ "<< pipeline.git.branch >>", "release" ]
+    jobs:
+      - build
+      - test
       - publish:
           requires:
+            - build
             - test
+      - deploy:
+          requires:
+            - publish
       
