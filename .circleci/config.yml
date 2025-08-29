@@ -109,6 +109,9 @@ workflows:
           requires:
             - build
             - test
+          filters:
+            branches:
+              only: release
       - deploy:
           requires:
             - publish
