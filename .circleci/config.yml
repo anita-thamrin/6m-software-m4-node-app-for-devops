@@ -97,7 +97,9 @@ workflows:
             - build # test depends on build
           filters:
             branches:
-              only: main  
+              only: 
+                - main
+                - release  
   # cd-workflow:
   #   when:
   #     condition:
